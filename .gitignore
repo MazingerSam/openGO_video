@@ -1,0 +1,46 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.env
+.venv
+env/
+venv/
+ENV/
+
+# Environment variables & secrets
+.env.local
+*.key
+credentials.json
+serviceAccount*.json
+
+# Jupyter Notebook & Colab checkpoints
+.ipynb_checkpoints/
+*/.ipynb_checkpoints/*
+
+# Generated media outputs
+outputs/*
+!outputs/.gitkeep
+server_outputs/
+*.mp4
+*.mov
+*.avi
+*.mkv
+*.gif
+*.webp
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+
+# IDEs & OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini

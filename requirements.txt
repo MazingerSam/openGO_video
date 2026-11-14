@@ -1,0 +1,3 @@
+# 本機客戶端需求（不含 torch / diffusers）
+requests>=2.31.0
+python-dotenv>=1.0.0
