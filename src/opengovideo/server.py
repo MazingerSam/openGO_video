@@ -387,9 +387,14 @@ def launch(
     warmup_models: list[str] | None = None,
 ) -> None:
     """啟動 uvicorn，並可選擇開啟 Cloudflare Tunnel。"""
+    import asyncio
+
     import nest_asyncio
     import uvicorn
 
+    # Colab / Jupyter 本來就有一個正在運行的事件迴圈，
+    # uvicorn.run() 內部呼叫 asyncio.run() 會因此拋 RuntimeError。
+    # 因此改用 Server.serve() 並在現有迴圈上執行。
     nest_asyncio.apply()
 
     if warmup_models:
@@ -413,7 +418,10 @@ def launch(
             print("🔗 Tunnel 已啟動，請查看上方輸出中的 trycloudflare.com 網址")
         print("=" * 68)
 
-    uvicorn.run(app, host=host, port=port)
+    config = uvicorn.Config(app, host=host, port=port, log_level="info")
+    server = uvicorn.Server(config)
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(server.serve())
 
 
 if __name__ == "__main__":
