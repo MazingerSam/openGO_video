@@ -23,7 +23,7 @@
 
 ## 階段 3：發布與自動化（待辦）
 
-- [ ] 建立 GitHub repo `MazingerSam/openGO_video` 並 push
+- [x] 建立 GitHub repo `MazingerSam/openGO_video`（public）並 push
 - [ ] 啟用 GitHub Actions 跑 `pytest`
 - [ ] 補上 LICENSE
 - [ ] 撰寫 Agent 技能文件 `.opencode/skills/opengovideo-bridge/SKILL.md`

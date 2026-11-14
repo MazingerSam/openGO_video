@@ -5,7 +5,7 @@
 - 專案名稱：openGO_video
 - 專案用途：本機 Agent 遙控 Google Colab GPU 的開源影片生成工具（video_test v2）
 - 工作目錄：`C:\Users\sam09\OneDrive\文件\AiAgent\openGO_video`
-- GitHub repo：`MazingerSam/openGO_video`（待建立／待 push）
+- GitHub repo：`MazingerSam/openGO_video`（public）
 - 預設 branch：`main`
 - 技術棧：Python 3.10+、FastAPI、diffusers、AnimateDiff、Stable Video Diffusion XT、Cloudflare Tunnel
 
