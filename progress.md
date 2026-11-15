@@ -17,7 +17,7 @@
 - [x] Colab 伺服器 `server.py`（工作佇列、進度、下載、相容端點）
 - [x] 推論管線 `pipeline.py`（延遲載入、CPU offload、VAE slicing）
 - [x] Colab 筆記本 `notebooks/colab_opengovideo.ipynb`
-- [ ] 在 Colab T4 / L4 實際跑通 t2v 與 i2v
+- [x] 在 Colab 實際跑通 t2v 與 i2v（2026-11-15，配到 A100 80GB）
 - [ ] 驗證長影片（>16 幀）不被逾時中斷
 - [ ] 確認程序重新載入模型時 VRAM 正常釋放
 
