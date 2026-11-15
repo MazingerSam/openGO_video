@@ -19,6 +19,21 @@ logger = get_logger("pipeline")
 
 ProgressFn = Callable[[float, str], None]
 
+# 模型載入器註冊表：family 名稱 → 載入函式。
+# 新增全新類型的模型時，在 models.py 加 ModelSpec（family=<新名稱>），
+# 並在此用 @builder("<新名稱>") 註冊一個載入函式即可。
+BUILDERS: dict[str, Callable[[ModelSpec, Any, bool], Any]] = {}
+
+
+def builder(family: str) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+    """把載入函式註冊到 BUILDERS。"""
+
+    def decorator(fn: Callable[..., Any]) -> Callable[..., Any]:
+        BUILDERS[family] = fn
+        return fn
+
+    return decorator
+
 
 class PipelineManager:
     """延遲載入並重複使用 GPU 管線。"""
@@ -86,39 +101,26 @@ class PipelineManager:
         use_cuda = torch.cuda.is_available()
         dtype = torch.float16 if use_cuda else torch.float32
 
-        if spec.key == "animatediff-v1.5":
-            from diffusers import AnimateDiffPipeline, DDIMScheduler, MotionAdapter
-
-            adapter = MotionAdapter.from_pretrained(spec.motion_adapter, torch_dtype=dtype)
-            pipe = AnimateDiffPipeline.from_pretrained(
-                spec.repo_id, motion_adapter=adapter, torch_dtype=dtype
+        build = BUILDERS.get(spec.family)
+        if build is None:
+            raise ValueError(
+                f"模型 {spec.key} 的 family `{spec.family}` 沒有註冊 builder。"
+                f"請在 pipeline.py 用 @builder('{spec.family}') 註冊載入函式。"
             )
-            pipe.scheduler = DDIMScheduler.from_config(
-                pipe.scheduler.config,
-                beta_schedule="linear",
-                clip_sample=False,
-                timestep_spacing="linspace",
-                steps_offset=1,
-            )
-        elif spec.key == "svd-xt":
-            from diffusers import StableVideoDiffusionPipeline
 
-            pipe = StableVideoDiffusionPipeline.from_pretrained(
-                spec.repo_id,
-                torch_dtype=dtype,
-                variant=spec.variant if use_cuda else None,
-            )
-        else:  # pragma: no cover - 由 registry 控制，理論上不會到這裡
-            raise ValueError(f"沒有對應的載入邏輯：{spec.key}")
+        pipe = build(spec, dtype, use_cuda)
+        self._optimize(pipe, use_cuda)
+        logger.info("已載入 %s（%s）", spec.key, "CUDA" if use_cuda else "CPU")
+        return pipe
 
+    @staticmethod
+    def _optimize(pipe: Any, use_cuda: bool) -> None:
         if use_cuda:
             pipe.enable_model_cpu_offload()
             if hasattr(pipe, "enable_vae_slicing"):
                 pipe.enable_vae_slicing()
         else:
             pipe.to("cpu")
-        logger.info("已載入 %s（%s）", spec.key, "CUDA" if use_cuda else "CPU")
-        return pipe
 
     # ------------------------------------------------------------------ 生成
     def generate_text2video(
@@ -197,6 +199,37 @@ class PipelineManager:
             export_to_video(result.frames[0], str(output_path), fps=fps or spec.default_fps)
         _report(progress, 1.0, "完成")
         return output_path
+
+
+# ---------------------------------------------------------------------------
+# 模型載入器（builder）：新增全新 family 時，在此用 @builder() 註冊。
+# 簽章：builder(spec: ModelSpec, dtype: torch.dtype, use_cuda: bool) -> pipeline
+# ---------------------------------------------------------------------------
+@builder("animatediff")
+def _build_animatediff(spec: ModelSpec, dtype: Any, use_cuda: bool) -> Any:
+    from diffusers import AnimateDiffPipeline, DDIMScheduler, MotionAdapter
+
+    adapter = MotionAdapter.from_pretrained(spec.motion_adapter, torch_dtype=dtype)
+    pipe = AnimateDiffPipeline.from_pretrained(spec.repo_id, motion_adapter=adapter, torch_dtype=dtype)
+    pipe.scheduler = DDIMScheduler.from_config(
+        pipe.scheduler.config,
+        beta_schedule="linear",
+        clip_sample=False,
+        timestep_spacing="linspace",
+        steps_offset=1,
+    )
+    return pipe
+
+
+@builder("svd")
+def _build_svd(spec: ModelSpec, dtype: Any, use_cuda: bool) -> Any:
+    from diffusers import StableVideoDiffusionPipeline
+
+    return StableVideoDiffusionPipeline.from_pretrained(
+        spec.repo_id,
+        torch_dtype=dtype,
+        variant=spec.variant if use_cuda else None,
+    )
 
 
 def _step_callback(progress: ProgressFn | None, total: int) -> Callable[..., dict[str, Any]] | None:

@@ -14,7 +14,7 @@
 | 項目 | video_test (v1) | openGO_video (v2) |
 | :--- | :--- | :--- |
 | 生成請求 | 同步阻塞，長生成易逾時 | 送出即回 `job_id`，輪詢進度 |
-| 模型管理 | 寫死在程式內 | `models.py` 註冊表（新增模型只需加一筆） |
+| 模型管理 | 寫死在程式內 | `models.py` 註冊表 + `pipeline.py` builder（同 family 加一筆即可） |
 | 進度 | 無 | 每步回報百分比與訊息 |
 | 伺服器 | 單一 notebook 內嵌程式 | 可測試的 `src/opengovideo/server.py` |
 | 客戶端 | 同步 API | 非同步工作 API + 同步相容端點 |
@@ -157,6 +157,7 @@ openGO_video/
 ├─ src/opengovideo/
 │  ├─ config.py                 # .env 設定、筆記本網址
 │  ├─ models.py                 # 模型註冊表（新增模型改這裡）
+│  ├─ pipeline.py               # 載入器 @builder + 推論與 VRAM 管理
 │  ├─ client.py                 # 本機客戶端（工作提交／輪詢／下載）
 │  ├─ cli.py                    # python -m opengovideo
 │  ├─ server.py                 # Colab 端 FastAPI + 工作佇列
@@ -182,6 +183,13 @@ openGO_video/
 - 本專案只用開源模型與免費 Colab 額度，不需任何付費 API Key。
 
 ---
+
+## ➕ 如何新增模型
+
+模型採「註冊表 + 載入器」兩層設計，完整步驟見 `.opencode/skills/opengovideo-bridge/SKILL.md`：
+
+- **同 family**（例如再加一個 AnimateDiff / SVD 模型）→ 只在 `models.py` 的 `MODELS` 加一筆即可。
+- **全新 family**（例如 LTX-Video、Wan 2.1）→ `models.py` 加一筆 + `pipeline.py` 用 `@builder()` 註冊載入函式。
 
 ## 🗺️ 待辦
 

@@ -15,6 +15,12 @@
 - Colab 筆記本 `notebooks/colab_opengovideo.ipynb`（安裝、啟動、Tunnel）。
 - 互動式重連工具 `connect.py` 與 Windows 捷徑 `restart_colab.bat`。
 - 單元測試 `tests/test_utils.py`。
+- 模型「註冊表 + 載入器」擴充架構：`models.py` 新增 `family` 欄位，`pipeline.py` 以 `@builder()` 註冊載入器，同 family 加模型只需一筆、新 family 只需加一個載入函式。
+- 完整工作流技能 `.opencode/skills/opengovideo-bridge/SKILL.md`（含 CLI/SDK、重連 SOP、如何新增模型、疑難排解）。
+
+### Fixed
+
+- Colab 事件迴圈下 `uvicorn.run()` 拋 `RuntimeError: asyncio.run() cannot be called from a running event loop`，改用 `Server.serve()` + `loop.run_until_complete()` 啟動。
 
 ## [0.1.0] - 2026-11-14
 
